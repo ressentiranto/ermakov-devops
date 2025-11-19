@@ -1,3 +1,6 @@
+0.7.0 - 2025.11.19 16:46:54 feature PR#12
+- 0770
+
 0.6.1 - 2025.11.19 16:37:27 hotfix PR#11
 - hotfix version changing
 
