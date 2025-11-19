@@ -24,3 +24,10 @@ jobs:
 
       - name: Execute tests
         run: pytest -q
+        
+      - name: Add test-passed label
+        if: success()
+        uses: actions-ecosystem/action-add-labels@v1
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          labels: test-passed
