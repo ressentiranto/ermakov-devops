@@ -8,6 +8,10 @@ PR_NUMBER="$3"
 VERSION_FILE="version.txt"
 CHANGELOG_FILE="changelog.md"
 
+echo "Branch type: ${BRANCH_TYPE}"
+echo "PR title: ${PR_TITLE}"
+echo "PR number: ${PR_NUMBER}"
+
 if [ ! -f "$VERSION_FILE" ]; then
   echo "version.txt not found"
   exit 1
@@ -19,6 +23,7 @@ if [ ! -f "$CHANGELOG_FILE" ]; then
 fi
 
 OLD_VERSION=$(cat "$VERSION_FILE")
+echo "Old version: ${OLD_VERSION}"
 
 IFS='.' read -r MAJOR MINOR PATCH <<< "$OLD_VERSION"
 
@@ -28,11 +33,12 @@ if [ "$BRANCH_TYPE" = "feature" ]; then
 elif [ "$BRANCH_TYPE" = "hotfix" ]; then
   PATCH=$((PATCH + 1))
 else
-  echo "unknown branch type: $BRANCH_TYPE"
+  echo "Unknown branch type: ${BRANCH_TYPE}"
   exit 1
 fi
 
 NEW_VERSION="${MAJOR}.${MINOR}.${PATCH}"
+echo "New version: ${NEW_VERSION}"
 
 echo "$NEW_VERSION" > "$VERSION_FILE"
 

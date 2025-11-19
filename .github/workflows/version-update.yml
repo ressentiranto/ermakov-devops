@@ -34,6 +34,7 @@ jobs:
         id: branch
         run: |
           src_branch="${{ steps.pr.outputs.head_ref }}"
+          echo "Source branch is: ${src_branch}"
           if [[ "$src_branch" == feature/* ]]; then
             echo "type=feature" >> "$GITHUB_OUTPUT"
           elif [[ "$src_branch" == hotfix/* ]]; then
@@ -44,7 +45,7 @@ jobs:
 
       - name: Stop if branch is not feature or hotfix
         if: steps.branch.outputs.type == 'other'
-        run: echo "no version update for this branch type"
+        run: echo "No version update for this branch type"
 
       - name: Make script executable
         if: steps.branch.outputs.type != 'other'
@@ -64,6 +65,7 @@ jobs:
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
+          git status
           git add version.txt changelog.md
           git commit -m "[${{ steps.bump.outputs.new_version }}] <- [${{ steps.bump.outputs.old_version }}] ${{ steps.branch.outputs.type }} up" || echo "nothing to commit"
           git push origin master
