@@ -1,7 +1,8 @@
 name: Version Update
 
 on:
-  push:
+  pull_request:
+    types: [closed]
     branches: [ master ]
 
 permissions:
@@ -10,33 +11,19 @@ permissions:
 
 jobs:
   update-version:
+    # Запускаем job только если PR реально смёрджен, а не просто закрыт
+    if: github.event.pull_request.merged == true
     runs-on: ubuntu-latest
 
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
-
-      - name: Get merged pull request
-        id: pr
-        uses: peter-evans/find-merged-pull-request@v3
-        with:
-          commit: ${{ github.sha }}
-          token: ${{ secrets.GITHUB_TOKEN }}
-
-
-      - name: Debug PR data
-        run: |
-          echo "head_ref: ${{ steps.pr.outputs.source_branch }}"
-          echo "title: ${{ steps.pr.outputs.title }}"
-          echo "number: ${{ steps.pr.outputs.number }}"
 
       - name: Detect branch type
         id: branch
         run: |
-          src_branch="${{ steps.pr.outputs.source_branch }}"
-          echo "Source branch is: ${src_branch}"
+          src_branch="${{ github.event.pull_request.head.ref }}"
+          echo "Source branch: ${src_branch}"
           if [[ "$src_branch" == feature/* ]]; then
             echo "type=feature" >> "$GITHUB_OUTPUT"
           elif [[ "$src_branch" == hotfix/* ]]; then
@@ -59,15 +46,14 @@ jobs:
         run: |
           .github/scripts/bump_version.sh \
             "${{ steps.branch.outputs.type }}" \
-            "${{ steps.pr.outputs.title }}" \
-            "${{ steps.pr.outputs.number }}"
+            "${{ github.event.pull_request.title }}" \
+            "${{ github.event.pull_request.number }}"
 
       - name: Commit and push changes
         if: steps.branch.outputs.type != 'other'
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
-          git status
           git add version.txt changelog.md
           git commit -m "[${{ steps.bump.outputs.new_version }}] <- [${{ steps.bump.outputs.old_version }}] ${{ steps.branch.outputs.type }} up" || echo "nothing to commit"
           git push origin master
