@@ -1,0 +1,60 @@
+name: Version Update
+
+on:
+  push:
+    branches: [ master ]
+
+jobs:
+  update-version:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Get merged pull request
+        id: pr
+        uses: actions-ecosystem/action-get-merged-pull-request@v1
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Detect branch type
+        id: branch
+        run: |
+          source_branch="${{ steps.pr.outputs.head_ref }}"
+          echo "source_branch=${source_branch}"
+          if [[ "$source_branch" == feature/* ]]; then
+            echo "type=feature" >> "$GITHUB_OUTPUT"
+          elif [[ "$source_branch" == hotfix/* ]]; then
+            echo "type=hotfix" >> "$GITHUB_OUTPUT"
+          else
+            echo "type=other" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Stop if branch is not feature or hotfix
+        if: steps.branch.outputs.type == 'other'
+        run: echo "no version update for this branch type"
+
+      - name: Make script executable
+        if: steps.branch.outputs.type != 'other'
+        run: chmod +x .github/scripts/bump_version.sh
+
+      - name: Update version and changelog
+        if: steps.branch.outputs.type != 'other'
+        id: bump
+        run: |
+          .github/scripts/bump_version.sh \
+            "${{ steps.branch.outputs.type }}" \
+            "${{ steps.pr.outputs.title }}" \
+            "${{ steps.pr.outputs.number }}"
+
+      - name: Commit and push changes
+        if: steps.branch.outputs.type != 'other'
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add version.txt changelog.md
+          git commit -m "[${{ steps.bump.outputs.new_version }}] <- [${{ steps.bump.outputs.old_version }}] ${{ steps.branch.outputs.type }} up" || echo "nothing to commit"
+          git push origin master
