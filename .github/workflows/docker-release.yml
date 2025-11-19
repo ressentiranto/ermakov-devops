@@ -1,0 +1,34 @@
+name: Docker Release
+
+on:
+  push:
+    branches: [ master ]
+
+permissions:
+  contents: read
+
+jobs:
+  build-and-push:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Read version
+        id: version
+        run: echo "VERSION=$(cat version.txt)" >> $GITHUB_OUTPUT
+
+      - name: Login to DockerHub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      - name: Build image
+        run: |
+          docker build -t ${{ secrets.DOCKERHUB_USERNAME }}/ermakov-devops:v${{ steps.version.outputs.VERSION }} .
+
+      - name: Push image
+        run: |
+          docker push ${{ secrets.DOCKERHUB_USERNAME }}/ermakov-devops:v${{ steps.version.outputs.VERSION }}
