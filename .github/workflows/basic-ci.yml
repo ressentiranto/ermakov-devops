@@ -9,8 +9,8 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout репозитория
+      - name: Checkout repo
         uses: actions/checkout@v4
 
-      - name: Просто вывести сообщение
-        run: echo "GitHub Actions работают! 🎉"
+      - name: show message
+        run: echo "GitHub Actions works!"

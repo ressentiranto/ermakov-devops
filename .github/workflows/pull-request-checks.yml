@@ -1,0 +1,26 @@
+name: Pull Request Checks
+
+on:
+  pull_request:
+    branches: [ master ]
+
+jobs:
+  run-tests:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
+
+      - name: Set up py
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install req
+        run: |
+          pip install -r requirements.txt
+          pip install pytest
+
+      - name: Execute tests
+        run: pytest -q
