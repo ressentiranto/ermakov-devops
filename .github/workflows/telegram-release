@@ -1,0 +1,55 @@
+name: Telegram Release Notify
+
+on:
+  workflow_run:
+    workflows: ["Docker Release"]
+    types:
+      - completed
+
+jobs:
+  notify:
+    if: ${{ github.event.workflow_run.conclusion == 'success' }}
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Read version
+        id: version
+        run: |
+          VERSION=$(cat version.txt)
+          echo "VERSION=$VERSION" >> $GITHUB_OUTPUT
+
+      - name: Read changelog
+        id: log
+        run: |
+          echo "--- changelog ---"
+          cat changelog.md
+
+      - name: Send message to Telegram
+        run: |
+          TEXT="*Выпуск изменений*\n\n\
+*Проект:* ermakov-devops\n\
+*Версия:* v${{ steps.version.outputs.VERSION }}\n\
+*Дата:* $(date +"%Y-%m-%d %H:%M:%S")\n\
+*Автор:* GitHub Actions \n\n\
+*Информация о Git:*\n\
+Тег: v${{ steps.version.outputs.VERSION }}\n\n\
+*Информация о DockerHub:*\n\
+Название: ermakov-devops\n\
+Тег: v${{ steps.version.outputs.VERSION }}"
+
+          curl -s -X POST "https://api.telegram.org/bot${{ secrets.TG_BOT_TOKEN }}/sendMessage" \
+            -H "Content-Type: application/json" \
+            -d "{
+              \"chat_id\": \"${{ secrets.TG_CHAT_ID }}\",
+              \"parse_mode\": \"Markdown\",
+              \"text\": \"${TEXT}\"
+            }"
+
+      - name: Send changelog file
+        run: |
+          curl -s -X POST "https://api.telegram.org/bot${{ secrets.TG_BOT_TOKEN }}/sendDocument" \
+            -F chat_id=${{ secrets.TG_CHAT_ID }} \
+            -F document=@changelog.md
