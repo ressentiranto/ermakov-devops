@@ -1,2 +1,0 @@
-# ermakov-devops
-peresdacha

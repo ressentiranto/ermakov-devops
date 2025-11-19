@@ -1,4 +1,0 @@
-services:
-  app:
-    image: <твой-логин>/<имя-репозитория>:latest
-    restart: unless-stopped
