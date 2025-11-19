@@ -4,6 +4,10 @@ on:
   push:
     branches: [ master ]
 
+permissions:
+  contents: write
+  pull-requests: read
+
 jobs:
   update-version:
     runs-on: ubuntu-latest
@@ -20,14 +24,19 @@ jobs:
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
 
+      - name: Debug PR data
+        run: |
+          echo "head_ref: ${{ steps.pr.outputs.head_ref }}"
+          echo "title: ${{ steps.pr.outputs.title }}"
+          echo "number: ${{ steps.pr.outputs.number }}"
+
       - name: Detect branch type
         id: branch
         run: |
-          source_branch="${{ steps.pr.outputs.head_ref }}"
-          echo "source_branch=${source_branch}"
-          if [[ "$source_branch" == feature/* ]]; then
+          src_branch="${{ steps.pr.outputs.head_ref }}"
+          if [[ "$src_branch" == feature/* ]]; then
             echo "type=feature" >> "$GITHUB_OUTPUT"
-          elif [[ "$source_branch" == hotfix/* ]]; then
+          elif [[ "$src_branch" == hotfix/* ]]; then
             echo "type=hotfix" >> "$GITHUB_OUTPUT"
           else
             echo "type=other" >> "$GITHUB_OUTPUT"
@@ -41,7 +50,7 @@ jobs:
         if: steps.branch.outputs.type != 'other'
         run: chmod +x .github/scripts/bump_version.sh
 
-      - name: Update version and changelog
+      - name: Run version bump script
         if: steps.branch.outputs.type != 'other'
         id: bump
         run: |
