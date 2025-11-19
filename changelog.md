@@ -1,3 +1,6 @@
+0.5.0 - 2025.11.19 14:40:00 feature PR#9
+- new tg bot
+
 0.4.0 - 2025.11.19 14:32:02 feature PR#8
 - app changed
 
